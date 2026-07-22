@@ -4,6 +4,7 @@ import { GaugePanel } from './GaugePanel.tsx';
 import { AdvisoryList, MetricsGrid } from './ForecastDetails.tsx';
 import { WeatherScene } from './WeatherScene.tsx';
 import { HotspotMap } from './HotspotMap.tsx';
+import { TimelineStrip } from './TimelineStrip.tsx';
 
 export interface ForecastViewProps {
   payload: ForecastPayload;
@@ -56,6 +57,7 @@ export function ForecastView({ payload, refreshing }: ForecastViewProps) {
       </header>
 
       <GaugePanel gauges={forecast.gauges} />
+      <TimelineStrip timeline={payload.timeline} />
       <AdvisoryList advisories={forecast.advisories} />
       <HotspotMap hotspots={payload.hotspots} />
       <MetricsGrid metrics={metrics} />
