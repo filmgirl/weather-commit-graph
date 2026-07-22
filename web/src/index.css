@@ -1,0 +1,1310 @@
+/*
+ * Weather Commit Graph.
+ *
+ * The shell is a dark, neutral instrument panel so the condition colours coming
+ * from shared/conditions.ts are the only thing carrying mood. Anything themed by
+ * the forecast reads from --sky-from / --sky-to / --accent, which ForecastView
+ * sets per condition.
+ */
+
+:root {
+  --bg: #0e1218;
+  --bg-raised: #161c26;
+  --bg-sunken: #10151d;
+  --border: #262f3d;
+  --border-strong: #35415380;
+  --text: #e8edf4;
+  --text-muted: #9aa7b8;
+  --text-faint: #6b788a;
+
+  --level-info: #58a6ff;
+  --level-watch: #e3a008;
+  --level-warning: #f4674f;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --gap: 20px;
+
+  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.section-title {
+  margin: 0 0 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* ---------- App frame ---------- */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.app__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-raised);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.app__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app__logo {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.app__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.app__tagline {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.app__body {
+  display: grid;
+  grid-template-columns: 288px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--gap);
+  padding: var(--gap) 24px 40px;
+  flex: 1;
+}
+
+.app__main {
+  min-width: 0;
+}
+
+/* ---------- Window picker ---------- */
+
+.window-picker {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+}
+
+.window-picker__option {
+  padding: 5px 13px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.window-picker__option:hover {
+  color: var(--text);
+  background: #ffffff0d;
+}
+
+.window-picker__option.is-active {
+  background: #ffffff17;
+  color: var(--text);
+}
+
+/* ---------- Repo picker ---------- */
+
+.repo-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  position: sticky;
+  top: 84px;
+}
+
+.repo-picker__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 620;
+}
+
+.repo-picker__hint,
+.repo-picker__empty {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.repo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.repo-list__item {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  border-radius: var(--radius-sm);
+  transition: background 120ms ease;
+}
+
+.repo-list__item:hover {
+  background: #ffffff0a;
+}
+
+.repo-list__item.is-selected {
+  background: #ffffff14;
+  box-shadow: inset 2px 0 0 var(--level-info);
+}
+
+.repo-list__select {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+}
+
+.repo-list__name {
+  font-size: 0.875rem;
+  font-weight: 550;
+}
+
+/* Only the tail of the path is shown (computed in JS), so plain truncation is
+   enough as a safety net for very long directory names. */
+.repo-list__path {
+  overflow: hidden;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.repo-list__remove {
+  flex: 0 0 auto;
+  width: 28px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 1.1rem;
+  line-height: 1;
+  opacity: 0;
+  transition:
+    opacity 120ms ease,
+    color 120ms ease,
+    background 120ms ease;
+}
+
+.repo-list__item:hover .repo-list__remove,
+.repo-list__remove:focus-visible {
+  opacity: 1;
+}
+
+.repo-list__remove:hover {
+  background: #f4674f1f;
+  color: var(--level-warning);
+}
+
+/* ---------- Add repo form ---------- */
+
+.add-repo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.add-repo__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.add-repo__input {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.add-repo__input::placeholder {
+  color: var(--text-faint);
+}
+
+.add-repo__input:focus-visible {
+  outline: 2px solid var(--level-info);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+
+.add-repo__submit {
+  padding: 8px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: #ffffff12;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: background 120ms ease;
+}
+
+.add-repo__submit:hover:not(:disabled) {
+  background: #ffffff1f;
+}
+
+.add-repo__submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.add-repo__error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--level-warning);
+}
+
+/* ---------- State panels ---------- */
+
+.state-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 48px 32px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+}
+
+.state-panel__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.state-panel__detail {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--text-muted);
+}
+
+.state-panel__action {
+  margin-top: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: #ffffff12;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.state-panel__action:hover {
+  background: #ffffff1f;
+}
+
+/* ---------- Forecast ---------- */
+
+.forecast {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+/*
+ * Flex items default to min-width:auto, which lets a wide child (the timeline
+ * strip) push past the viewport and make the whole page scroll sideways instead
+ * of scrolling within itself.
+ */
+.forecast > * {
+  min-width: 0;
+}
+
+/*
+ * Text colour on the hero follows the condition's declared ink rather than
+ * always being white, because the pale skies (sunny, snow, fog) cannot carry
+ * white text at a readable contrast.
+ */
+.forecast[data-ink='light'] {
+  --hero-ink: #ffffff;
+  --hero-ink-muted: #ffffffc7;
+  --hero-ink-faint: #ffffff85;
+  --hero-scrim: #00000024;
+}
+
+.forecast[data-ink='dark'] {
+  --hero-ink: #101820;
+  --hero-ink-muted: #101820c9;
+  --hero-ink-faint: #10182099;
+  --hero-scrim: #ffffff1a;
+}
+
+.forecast__hero {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  /* Themed by condition, so the panel's mood tracks the forecast. */
+  background: linear-gradient(160deg, var(--sky-from), var(--sky-to));
+  color: var(--hero-ink);
+}
+
+.forecast__scene {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--hero-scrim);
+}
+
+.forecast__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--hero-ink-muted);
+}
+
+.forecast__eyebrow-sep {
+  color: var(--hero-ink-faint);
+}
+
+.forecast__refreshing {
+  color: var(--hero-ink-faint);
+  font-weight: 500;
+  font-style: italic;
+}
+
+.forecast__headline {
+  margin: 0;
+  font-size: clamp(1.5rem, 3.2vw, 2.15rem);
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.forecast__condition {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin: 10px 0 0;
+}
+
+.forecast__condition-label {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #10151d;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.forecast__condition-meaning {
+  font-size: 0.85rem;
+  color: var(--hero-ink-muted);
+}
+
+.forecast__summary {
+  margin: 12px 0 0;
+  max-width: 66ch;
+  font-size: 0.95rem;
+  color: var(--hero-ink);
+}
+
+.forecast__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
+/* ---------- Gauges ---------- */
+
+.gauges {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.gauge {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+}
+
+.gauge__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.gauge__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 4px 0 0;
+}
+
+.gauge__value {
+  font-size: 1.6rem;
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.gauge__meaning {
+  font-size: 0.8rem;
+  font-weight: 550;
+  color: var(--text-muted);
+}
+
+.gauge__detail {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
+/* A falling barometer is the one gauge worth colouring: it is the lead
+   indicator that trouble is building rather than already present. */
+.gauge--falling {
+  border-color: #f4674f5c;
+}
+
+.gauge--falling .gauge__value {
+  color: var(--level-warning);
+}
+
+.gauge--rising .gauge__value {
+  color: #56d364;
+}
+
+/* ---------- Advisories ---------- */
+
+.advisories__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.advisory {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+}
+
+/* Severity is carried by the badge rather than a coloured edge, so scanning the
+   list means reading the labels instead of decoding a stripe. */
+.advisory__level {
+  justify-self: start;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.advisory--info .advisory__level {
+  background: #58a6ff1f;
+  color: var(--level-info);
+}
+
+.advisory--watch .advisory__level {
+  background: #e3a0081f;
+  color: var(--level-watch);
+}
+
+.advisory--warning .advisory__level {
+  background: var(--level-warning);
+  color: #1a0f0c;
+}
+
+/* Only a warning earns extra weight on the card itself. */
+.advisory--warning {
+  border-color: #f4674f4d;
+}
+
+.advisory__title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.advisory__detail {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Metrics ---------- */
+
+/*
+ * Hairlines come from per-cell borders rather than the gap-plus-container-colour
+ * trick, so the leftover space on the final row matches the cells instead of
+ * showing through as a stray empty panel.
+ */
+.metrics__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  overflow: hidden;
+}
+
+.metric {
+  padding: 12px 14px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.metric__label {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}
+
+.metric__value {
+  margin: 2px 0 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+  .app__body {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 16px;
+  }
+
+  .repo-picker {
+    position: static;
+  }
+
+  .forecast__hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .forecast__scene {
+    max-width: 260px;
+    aspect-ratio: 16 / 9;
+  }
+}
+
+@media (max-width: 560px) {
+  .app__bar {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .advisory {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+}
+
+/* Every transition here is decorative, so drop them all when asked. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ---------- Weather scenes ---------- */
+
+/*
+ * All scene motion lives here so a single reduced-motion rule can stop it. Each
+ * element's duration/delay comes from the component as an inline style, because
+ * those values are derived from the data (heavier churn = faster, denser rain).
+ */
+
+.scene {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Scenes must clip to their own box: the fog bands and drifting clouds are
+     deliberately wider than the viewBox so they can slide without gaps. */
+  overflow: hidden;
+}
+
+/* Sun */
+
+.scene__sun-disc {
+  fill: #ffd764;
+}
+
+.scene__ray {
+  stroke: #ffd764;
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+.scene__rays {
+  animation: scene-rotate 60s linear infinite;
+}
+
+.scene__sun {
+  animation: scene-pulse 6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes scene-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes scene-pulse {
+  0%,
+  100% {
+    opacity: 0.94;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Clouds */
+
+.scene__cloud > * {
+  fill: #f2f6fa;
+}
+
+.scene__cloud--dark > * {
+  fill: #b9b3cc;
+}
+
+/*
+ * Drift is applied to a child-level transform so it composes with the positioning
+ * transform on the group itself rather than fighting it.
+ */
+.scene__cloud {
+  animation: scene-drift 30s ease-in-out infinite;
+}
+
+@keyframes scene-drift {
+  0%,
+  100% {
+    translate: -7px 0;
+  }
+  50% {
+    translate: 7px 0;
+  }
+}
+
+/* Rain */
+
+.scene__drop {
+  stroke: #d8ecff;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  animation: scene-fall linear infinite;
+}
+
+.scene__rain--slant .scene__drop {
+  stroke: #cfd8ff;
+  animation-name: scene-fall-slant;
+}
+
+@keyframes scene-fall {
+  from {
+    transform: translateY(-6px);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  85% {
+    opacity: 0.9;
+  }
+  to {
+    transform: translateY(52px);
+    opacity: 0;
+  }
+}
+
+@keyframes scene-fall-slant {
+  from {
+    transform: translate(6px, -6px);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.95;
+  }
+  85% {
+    opacity: 0.95;
+  }
+  to {
+    transform: translate(-10px, 52px);
+    opacity: 0;
+  }
+}
+
+/* Lightning */
+
+.scene__bolt {
+  fill: #ffe66b;
+}
+
+/*
+ * The bolt stays faintly visible and flashes bright, rather than only existing
+ * during the flash. A storm should still read as a storm in a still frame, or
+ * for anyone who has motion disabled.
+ */
+.scene__lightning {
+  opacity: 0.32;
+  animation: scene-flash 4.5s steps(1, end) infinite;
+}
+
+@keyframes scene-flash {
+  0%,
+  100% {
+    opacity: 0.32;
+  }
+  2% {
+    opacity: 1;
+  }
+  5% {
+    opacity: 0.32;
+  }
+  8% {
+    opacity: 0.9;
+  }
+  11% {
+    opacity: 0.32;
+  }
+}
+
+/* Fog */
+
+.scene__fog-band {
+  fill: #ffffff;
+  animation: scene-fog-slide ease-in-out infinite alternate;
+}
+
+@keyframes scene-fog-slide {
+  from {
+    translate: -22px 0;
+  }
+  to {
+    translate: 22px 0;
+  }
+}
+
+/* Snow */
+
+.scene__flake {
+  fill: #ffffff;
+  animation: scene-flutter linear infinite;
+}
+
+@keyframes scene-flutter {
+  from {
+    transform: translate(0, -14px);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.95;
+  }
+  50% {
+    transform: translate(6px, 16px);
+  }
+  85% {
+    opacity: 0.9;
+  }
+  to {
+    transform: translate(-4px, 52px);
+    opacity: 0;
+  }
+}
+
+/*
+ * Reduced motion: hold every scene on a representative frame rather than hiding
+ * the artwork. Falling elements are frozen at staggered positions (--frozen-y,
+ * set per element by the component) so rain and snow still look like weather in
+ * mid-fall instead of a single row of marks.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .scene__rays,
+  .scene__sun,
+  .scene__cloud,
+  .scene__drop,
+  .scene__lightning,
+  .scene__fog-band,
+  .scene__flake {
+    animation: none !important;
+  }
+
+  .scene__lightning {
+    opacity: 1;
+  }
+
+  .scene__drop,
+  .scene__flake {
+    opacity: 0.9;
+    transform: translateY(var(--frozen-y, 0));
+  }
+}
+
+/* ---------- Hotspot storm map ---------- */
+
+.hotspots__head {
+  margin-bottom: 12px;
+}
+
+.hotspots__caption {
+  margin: 0;
+  max-width: 70ch;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.hotspots__empty {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.hotspots__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 12px;
+  align-items: start;
+}
+
+/*
+ * Flex rather than a uniform grid: each cell's flex-grow comes from its hotspot
+ * score, so the files carrying the most risk take up the most room. A tidy equal
+ * grid would flatten exactly the signal this view exists to show.
+ */
+.hotspot-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hotspot-grid__item {
+  min-width: 0;
+}
+
+.hotspot {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  text-align: left;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.hotspot:hover,
+.hotspot.is-active {
+  border-color: var(--cell-accent);
+  background: #ffffff0f;
+}
+
+.hotspot__scene {
+  display: block;
+  width: 100%;
+  height: 42px;
+  margin-bottom: 4px;
+}
+
+.hotspot__name {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 550;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hotspot__meta {
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.hotspots__toggle {
+  align-self: start;
+  margin-top: 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: #ffffff0f;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.hotspots__toggle:hover {
+  background: #ffffff1c;
+}
+
+/* Detail pane */
+
+.hotspot-detail {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+}
+
+.hotspot-detail__path {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.hotspot-detail__condition {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 12px;
+}
+
+.hotspot-detail__badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #10151d;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.hotspot-detail__score {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.hotspot-detail__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+  margin: 0;
+}
+
+.hotspot-detail__stat dt {
+  font-size: 0.7rem;
+  color: var(--text-faint);
+}
+
+.hotspot-detail__stat dd {
+  margin: 1px 0 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 780px) {
+  .hotspots__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- Forecast strip ---------- */
+
+.timeline__head {
+  margin-bottom: 12px;
+}
+
+.timeline__caption {
+  margin: 0;
+  max-width: 74ch;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.timeline__list {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+}
+
+.tl-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 62px;
+  padding: 10px 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  /* Containing block for the visually-hidden summary below. Without it that
+     absolutely-positioned span escapes the strip's scroll container and widens
+     the whole document. */
+  position: relative;
+}
+
+/*
+ * Projected days are visibly provisional: dashed border and a faded panel, so a
+ * guess can never be mistaken for a measurement.
+ */
+.tl-day--projected {
+  border-style: dashed;
+  background: transparent;
+}
+
+.tl-day--projected .tl-day__scene,
+.tl-day--projected .tl-day__bar {
+  opacity: 0.6;
+}
+
+.tl-day__scene {
+  width: 100%;
+  height: 34px;
+}
+
+.tl-day__bar-track {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 46px;
+  padding: 0 20%;
+}
+
+.tl-day__bar {
+  width: 100%;
+  min-height: 3px;
+  border-radius: 3px 3px 1px 1px;
+  background: var(--accent);
+}
+
+.tl-day--projected .tl-day__bar {
+  /* Hollow bar reinforces that this is a projection, not a recorded value. */
+  background: transparent;
+  border: 1px dashed var(--accent);
+}
+
+.tl-day__commits {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.tl-day__date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.tl-day__weekday {
+  font-size: 0.68rem;
+  color: var(--text-faint);
+}
+
+.tl-day__daynum {
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tl-day__condition {
+  margin: 1px 0 0;
+  font-size: 0.64rem;
+  color: var(--text-faint);
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Visually hidden, but read out by screen readers as the day's full summary. */
+.tl-day__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .timeline__list {
+    grid-auto-columns: 68px;
+  }
+}
+
+/* ---------- Live indicator ---------- */
+
+.app__bar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.live__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.live--live {
+  color: #56d364;
+}
+
+/* A slow pulse reads as "still connected" without demanding attention. */
+.live--live .live__dot {
+  animation: live-pulse 2.4s ease-in-out infinite;
+}
+
+.live--connecting {
+  color: var(--level-watch);
+}
+
+.live--connecting .live__dot {
+  animation: live-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.8);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live__dot {
+    animation: none !important;
+  }
+}

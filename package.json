@@ -1,0 +1,38 @@
+{
+  "name": "weather-commit-graph",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Renders your git history as a weather forecast",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "shared",
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:server": "npm run dev --workspace server",
+    "dev:web": "npm run dev --workspace web",
+    "build": "npm run build --workspace server && npm run build --workspace web",
+    "start": "npm run start --workspace server",
+    "typecheck": "npm run typecheck --workspace shared && npm run typecheck --workspace server && npm run typecheck --workspace web",
+    "lint": "oxlint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "report": "tsx scripts/weather-report.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "@types/supertest": "^7.2.1",
+    "concurrently": "^9.2.1",
+    "oxlint": "^1.71.0",
+    "supertest": "^7.2.2",
+    "tsx": "^4.20.6",
+    "typescript": "~6.0.2",
+    "vitest": "^3.2.4"
+  }
+}
