@@ -3,10 +3,13 @@ import type { ApiErrorBody } from '@wcg/shared';
 import { GitError } from '../git/exec.ts';
 import { RegistryError, type RepoRegistry } from '../registry/registry.ts';
 import { ForecastService, parseWindow, WindowError } from '../forecast/service.ts';
+import type { WatcherRegistry } from '../watch/watcher.ts';
+import { streamForecast } from './stream.ts';
 
 export interface ApiDeps {
   registry: RepoRegistry;
   forecasts: ForecastService;
+  watchers: WatcherRegistry;
 }
 
 export function createApiRouter(deps: ApiDeps): Router {
@@ -60,6 +63,20 @@ export function createApiRouter(deps: ApiDeps): Router {
       const payload = await forecasts.getForecast(req.params.id, windowDays);
       res.json(payload);
     } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/repos/:id/stream', async (req, res, next) => {
+    try {
+      await streamForecast(req, res, deps);
+    } catch (error) {
+      // Once the SSE headers are out there is no way to send a JSON error, so
+      // just close the stream and let the client reconnect.
+      if (res.headersSent) {
+        res.end();
+        return;
+      }
       next(error);
     }
   });

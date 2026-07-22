@@ -2,17 +2,20 @@ import express from 'express';
 import type { ApiErrorBody } from '@wcg/shared';
 import { RepoRegistry } from './registry/registry.ts';
 import { ForecastService } from './forecast/service.ts';
+import { WatcherRegistry } from './watch/watcher.ts';
 import { createApiRouter, statusForError } from './routes/api.ts';
 
 export interface AppDeps {
   registry?: RepoRegistry;
   forecasts?: ForecastService;
+  watchers?: WatcherRegistry;
 }
 
 export interface AppBundle {
   app: express.Express;
   registry: RepoRegistry;
   forecasts: ForecastService;
+  watchers: WatcherRegistry;
 }
 
 /**
@@ -22,12 +25,13 @@ export interface AppBundle {
 export function createAppBundle(deps: AppDeps = {}): AppBundle {
   const registry = deps.registry ?? new RepoRegistry();
   const forecasts = deps.forecasts ?? new ForecastService(registry);
+  const watchers = deps.watchers ?? new WatcherRegistry();
 
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '64kb' }));
 
-  app.use('/api', createApiRouter({ registry, forecasts }));
+  app.use('/api', createApiRouter({ registry, forecasts, watchers }));
 
   // Unknown /api routes should answer in the API error shape, not Express HTML.
   app.use('/api', (_req, res) => {
@@ -48,7 +52,7 @@ export function createAppBundle(deps: AppDeps = {}): AppBundle {
     },
   );
 
-  return { app, registry, forecasts };
+  return { app, registry, forecasts, watchers };
 }
 
 export function createApp(deps: AppDeps = {}): express.Express {

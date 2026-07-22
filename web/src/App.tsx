@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRepos } from './hooks/useRepos.ts';
-import { useForecast } from './hooks/useForecast.ts';
+import { useForecast, type LiveStatus } from './hooks/useForecast.ts';
 import { RepoPicker } from './components/RepoPicker.tsx';
 import { ForecastView } from './components/ForecastView.tsx';
 
@@ -36,6 +36,7 @@ export default function App() {
     loading: forecastLoading,
     initialLoading,
     error: forecastError,
+    liveStatus,
     reload,
   } = useForecast(selectedId, windowDays);
 
@@ -52,18 +53,21 @@ export default function App() {
           </div>
         </div>
 
-        <div className="window-picker" role="group" aria-label="Forecast window">
-          {WINDOWS.map((days) => (
-            <button
-              key={days}
-              type="button"
-              className={`window-picker__option${days === windowDays ? ' is-active' : ''}`}
-              aria-pressed={days === windowDays}
-              onClick={() => setWindowDays(days)}
-            >
-              {days}d
-            </button>
-          ))}
+        <div className="app__bar-right">
+          {forecast ? <LiveIndicator status={liveStatus} /> : null}
+          <div className="window-picker" role="group" aria-label="Forecast window">
+            {WINDOWS.map((days) => (
+              <button
+                key={days}
+                type="button"
+                className={`window-picker__option${days === windowDays ? ' is-active' : ''}`}
+                aria-pressed={days === windowDays}
+                onClick={() => setWindowDays(days)}
+              >
+                {days}d
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 
@@ -121,6 +125,22 @@ interface StatePanelProps {
   title: string;
   detail?: string;
   action?: { label: string; onClick: () => void };
+}
+
+const LIVE_LABELS: Record<LiveStatus, { text: string; hint: string }> = {
+  live: { text: 'Live', hint: 'Watching this repository for new commits.' },
+  connecting: { text: 'Reconnecting', hint: 'Trying to re-establish the live connection.' },
+  offline: { text: 'Not live', hint: 'Updates are not streaming; reload to refresh.' },
+};
+
+function LiveIndicator({ status }: { status: LiveStatus }) {
+  const label = LIVE_LABELS[status];
+  return (
+    <span className={`live live--${status}`} title={label.hint}>
+      <span className="live__dot" aria-hidden="true" />
+      {label.text}
+    </span>
+  );
 }
 
 function StatePanel({ title, detail, action }: StatePanelProps) {

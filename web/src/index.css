@@ -1230,3 +1230,63 @@ code {
     grid-auto-columns: 68px;
   }
 }
+
+/* ---------- Live indicator ---------- */
+
+.app__bar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.live__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.live--live {
+  color: #56d364;
+}
+
+/* A slow pulse reads as "still connected" without demanding attention. */
+.live--live .live__dot {
+  animation: live-pulse 2.4s ease-in-out infinite;
+}
+
+.live--connecting {
+  color: var(--level-watch);
+}
+
+.live--connecting .live__dot {
+  animation: live-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.8);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live__dot {
+    animation: none !important;
+  }
+}
