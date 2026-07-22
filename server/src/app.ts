@@ -4,11 +4,14 @@ import { RepoRegistry } from './registry/registry.ts';
 import { ForecastService } from './forecast/service.ts';
 import { WatcherRegistry } from './watch/watcher.ts';
 import { createApiRouter, statusForError } from './routes/api.ts';
+import { mountWebApp } from './web.ts';
 
 export interface AppDeps {
   registry?: RepoRegistry;
   forecasts?: ForecastService;
   watchers?: WatcherRegistry;
+  /** Tests opt out so an existing web/dist cannot swallow their 404 assertions. */
+  serveWeb?: boolean;
 }
 
 export interface AppBundle {
@@ -38,6 +41,9 @@ export function createAppBundle(deps: AppDeps = {}): AppBundle {
     const body: ApiErrorBody = { error: 'not found', code: 'not_found' };
     res.status(404).json(body);
   });
+
+  // Serves the built dashboard when present; a no-op during development.
+  if (deps.serveWeb !== false) mountWebApp(app);
 
   app.use(
     (

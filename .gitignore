@@ -29,3 +29,6 @@ pnpm-debug.log*
 # Local tooling caches
 .impeccable/
 .playwright-mcp/
+
+# Local screenshots from browser verification
+/*.png

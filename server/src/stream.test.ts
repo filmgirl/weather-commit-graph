@@ -21,7 +21,11 @@ let baseUrl: string;
 beforeEach(async () => {
   tmpDir = await mkdtemp(path.join(os.tmpdir(), 'wcg-stream-'));
   const registry = new RepoRegistry(path.join(tmpDir, 'repos.json'));
-  bundle = createAppBundle({ registry, forecasts: new ForecastService(registry) });
+  bundle = createAppBundle({
+    registry,
+    forecasts: new ForecastService(registry),
+    serveWeb: false,
+  });
   server = await listen(bundle);
   const address = server.address() as AddressInfo;
   baseUrl = `http://127.0.0.1:${address.port}`;

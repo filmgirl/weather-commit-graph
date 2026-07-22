@@ -382,6 +382,15 @@ code {
 }
 
 /*
+ * Flex items default to min-width:auto, which lets a wide child (the timeline
+ * strip) push past the viewport and make the whole page scroll sideways instead
+ * of scrolling within itself.
+ */
+.forecast > * {
+  min-width: 0;
+}
+
+/*
  * Text colour on the hero follows the condition's declared ink rather than
  * always being white, because the pale skies (sunny, snow, fog) cannot carry
  * white text at a readable contrast.
@@ -621,20 +630,25 @@ code {
 
 /* ---------- Metrics ---------- */
 
+/*
+ * Hairlines come from per-cell borders rather than the gap-plus-container-colour
+ * trick, so the leftover space on the final row matches the cells instead of
+ * showing through as a stray empty panel.
+ */
 .metrics__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 1px;
   margin: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--border);
+  background: var(--bg-raised);
   overflow: hidden;
 }
 
 .metric {
   padding: 12px 14px;
-  background: var(--bg-raised);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .metric__label {
@@ -1135,6 +1149,10 @@ code {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-raised);
+  /* Containing block for the visually-hidden summary below. Without it that
+     absolutely-positioned span escapes the strip's scroll container and widens
+     the whole document. */
+  position: relative;
 }
 
 /*

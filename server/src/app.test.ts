@@ -15,7 +15,12 @@ beforeEach(async () => {
   // Every test gets its own registry file so nothing touches the real ~/.wcg.
   tmpDir = await mkdtemp(path.join(os.tmpdir(), 'wcg-api-'));
   const registry = new RepoRegistry(path.join(tmpDir, 'repos.json'));
-  bundle = createAppBundle({ registry, forecasts: new ForecastService(registry) });
+  bundle = createAppBundle({
+    registry,
+    forecasts: new ForecastService(registry),
+    // A stale web/dist must not swallow this suite's 404 assertions.
+    serveWeb: false,
+  });
 });
 
 afterEach(async () => {
@@ -192,7 +197,11 @@ describe('GET /api/repos/:id/forecast', () => {
 
   it('reports a repo that has gone missing since it was added', async () => {
     const registry = new RepoRegistry(path.join(tmpDir, 'gone.json'));
-    const local = createAppBundle({ registry, forecasts: new ForecastService(registry) });
+    const local = createAppBundle({
+      registry,
+      forecasts: new ForecastService(registry),
+      serveWeb: false,
+    });
 
     // Register a real repo, then rewrite the entry to point somewhere that no
     // longer exists — the same situation as a repo being moved or deleted.
@@ -211,5 +220,26 @@ describe('unknown api routes', () => {
   it('answer in the API error shape', async () => {
     const response = await request(bundle.app).get('/api/nope').expect(404);
     expect(response.body).toEqual({ error: 'not found', code: 'not_found' });
+  });
+});
+
+describe('serving the built dashboard', () => {
+  it('mounts no SPA fallback when static serving is off', async () => {
+    await request(bundle.app).get('/some/spa/route').expect(404);
+  });
+
+  it('keeps API errors as JSON even with the SPA fallback mounted', async () => {
+    // The fallback is registered after the API router and excludes /api, so an
+    // unknown API path must never be answered with the HTML shell.
+    const registry = new RepoRegistry(path.join(tmpDir, 'spa.json'));
+    const withWeb = createAppBundle({
+      registry,
+      forecasts: new ForecastService(registry),
+      serveWeb: true,
+    });
+
+    const response = await request(withWeb.app).get('/api/nope').expect(404);
+    expect(response.body).toEqual({ error: 'not found', code: 'not_found' });
+    expect(response.headers['content-type']).toMatch(/json/);
   });
 });
