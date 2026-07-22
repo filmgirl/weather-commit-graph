@@ -97,7 +97,9 @@ function Sun({ cx, cy, r, rays }: { cx: number; cy: number; r: number; rays: boo
 function SunnyScene({ level, compact }: SceneProps) {
   return (
     <>
-      <Sun cx={80} cy={54} r={compact ? 18 : 22} rays={!compact} />
+      {/* Rays are kept even when compact: without them a small sun is just a dot
+          and the cell stops reading as weather. */}
+      <Sun cx={80} cy={54} r={compact ? 16 : 22} rays />
       {/* Even clear skies get a wisp or two once there is any churn at all. */}
       {!compact && level > 0.08 ? (
         <Cloud x={26} y={86} scale={0.5} opacity={0.5} driftSeconds={34} />
@@ -109,7 +111,7 @@ function SunnyScene({ level, compact }: SceneProps) {
 function PartlyCloudyScene({ level, compact }: SceneProps) {
   return (
     <>
-      <Sun cx={62} cy={46} r={compact ? 15 : 19} rays={!compact} />
+      <Sun cx={62} cy={46} r={compact ? 14 : 19} rays />
       <Cloud x={82} y={62} scale={compact ? 0.85 : 1} opacity={0.95} driftSeconds={26} />
       {!compact ? (
         <Cloud x={34} y={84} scale={0.6} opacity={0.6} driftSeconds={32} delaySeconds={-8} />

@@ -3,6 +3,7 @@ import { CONDITION_META } from '@wcg/shared';
 import { GaugePanel } from './GaugePanel.tsx';
 import { AdvisoryList, MetricsGrid } from './ForecastDetails.tsx';
 import { WeatherScene } from './WeatherScene.tsx';
+import { HotspotMap } from './HotspotMap.tsx';
 
 export interface ForecastViewProps {
   payload: ForecastPayload;
@@ -56,6 +57,7 @@ export function ForecastView({ payload, refreshing }: ForecastViewProps) {
 
       <GaugePanel gauges={forecast.gauges} />
       <AdvisoryList advisories={forecast.advisories} />
+      <HotspotMap hotspots={payload.hotspots} />
       <MetricsGrid metrics={metrics} />
 
       <footer className="forecast__footer">

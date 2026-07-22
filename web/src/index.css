@@ -933,3 +933,170 @@ code {
     transform: translateY(var(--frozen-y, 0));
   }
 }
+
+/* ---------- Hotspot storm map ---------- */
+
+.hotspots__head {
+  margin-bottom: 12px;
+}
+
+.hotspots__caption {
+  margin: 0;
+  max-width: 70ch;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.hotspots__empty {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.hotspots__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 12px;
+  align-items: start;
+}
+
+/*
+ * Flex rather than a uniform grid: each cell's flex-grow comes from its hotspot
+ * score, so the files carrying the most risk take up the most room. A tidy equal
+ * grid would flatten exactly the signal this view exists to show.
+ */
+.hotspot-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hotspot-grid__item {
+  min-width: 0;
+}
+
+.hotspot {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  text-align: left;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.hotspot:hover,
+.hotspot.is-active {
+  border-color: var(--cell-accent);
+  background: #ffffff0f;
+}
+
+.hotspot__scene {
+  display: block;
+  width: 100%;
+  height: 42px;
+  margin-bottom: 4px;
+}
+
+.hotspot__name {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 550;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hotspot__meta {
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.hotspots__toggle {
+  align-self: start;
+  margin-top: 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: #ffffff0f;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.hotspots__toggle:hover {
+  background: #ffffff1c;
+}
+
+/* Detail pane */
+
+.hotspot-detail {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+}
+
+.hotspot-detail__path {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.hotspot-detail__condition {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 12px;
+}
+
+.hotspot-detail__badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #10151d;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.hotspot-detail__score {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.hotspot-detail__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+  margin: 0;
+}
+
+.hotspot-detail__stat dt {
+  font-size: 0.7rem;
+  color: var(--text-faint);
+}
+
+.hotspot-detail__stat dd {
+  margin: 1px 0 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 780px) {
+  .hotspots__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
