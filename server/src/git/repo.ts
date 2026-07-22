@@ -35,7 +35,18 @@ export async function resolveRepo(inputPath: string): Promise<RepoIdentity> {
 
   // Ask git rather than looking for a `.git` entry ourselves, so worktrees and
   // submodules are handled the way git handles them.
-  const topLevel = (await git(canonical, ['rev-parse', '--show-toplevel'])).trim();
+  let topLevel: string;
+  try {
+    topLevel = (await git(canonical, ['rev-parse', '--show-toplevel'])).trim();
+  } catch (error) {
+    // A readable directory that git rejects is simply not a repository. Say that
+    // plainly instead of forwarding git's own stderr to the user. A missing git
+    // binary is a different problem and must keep its own message.
+    if (error instanceof GitError && error.code !== 'git_missing') {
+      throw new GitError(`not a git repository: ${canonical}`, 'not_a_repo');
+    }
+    throw error;
+  }
   if (!topLevel) {
     throw new GitError(`not a git repository: ${canonical}`, 'not_a_repo');
   }

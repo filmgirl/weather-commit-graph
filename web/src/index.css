@@ -1,23 +1,705 @@
+/*
+ * Weather Commit Graph.
+ *
+ * The shell is a dark, neutral instrument panel so the condition colours coming
+ * from shared/conditions.ts are the only thing carrying mood. Anything themed by
+ * the forecast reads from --sky-from / --sky-to / --accent, which ForecastView
+ * sets per condition.
+ */
+
 :root {
+  --bg: #0e1218;
+  --bg-raised: #161c26;
+  --bg-sunken: #10151d;
+  --border: #262f3d;
+  --border-strong: #35415380;
+  --text: #e8edf4;
+  --text-muted: #9aa7b8;
+  --text-faint: #6b788a;
+
+  --level-info: #58a6ff;
+  --level-watch: #e3a008;
+  --level-warning: #f4674f;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --gap: 20px;
+
+  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
   color-scheme: dark;
-  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
 }
 
 body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.section-title {
+  margin: 0 0 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* ---------- App frame ---------- */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.app__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-raised);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.app__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app__logo {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.app__title {
   margin: 0;
-  min-height: 100vh;
-  background: #10151c;
-  color: #e8eef5;
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
 }
 
-.scaffold {
+.app__tagline {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.app__body {
   display: grid;
-  place-content: center;
-  gap: 0.5rem;
-  min-height: 100vh;
-  text-align: center;
+  grid-template-columns: 288px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--gap);
+  padding: var(--gap) 24px 40px;
+  flex: 1;
 }
 
-.status[data-state='ok'] { color: #6ee7a8; }
-.status[data-state='unreachable'] { color: #f87171; }
-.status[data-state='checking'] { color: #94a3b4; }
+.app__main {
+  min-width: 0;
+}
+
+/* ---------- Window picker ---------- */
+
+.window-picker {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+}
+
+.window-picker__option {
+  padding: 5px 13px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.window-picker__option:hover {
+  color: var(--text);
+  background: #ffffff0d;
+}
+
+.window-picker__option.is-active {
+  background: #ffffff17;
+  color: var(--text);
+}
+
+/* ---------- Repo picker ---------- */
+
+.repo-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  position: sticky;
+  top: 84px;
+}
+
+.repo-picker__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 620;
+}
+
+.repo-picker__hint,
+.repo-picker__empty {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.repo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.repo-list__item {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  border-radius: var(--radius-sm);
+  transition: background 120ms ease;
+}
+
+.repo-list__item:hover {
+  background: #ffffff0a;
+}
+
+.repo-list__item.is-selected {
+  background: #ffffff14;
+  box-shadow: inset 2px 0 0 var(--level-info);
+}
+
+.repo-list__select {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+}
+
+.repo-list__name {
+  font-size: 0.875rem;
+  font-weight: 550;
+}
+
+/* Only the tail of the path is shown (computed in JS), so plain truncation is
+   enough as a safety net for very long directory names. */
+.repo-list__path {
+  overflow: hidden;
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.repo-list__remove {
+  flex: 0 0 auto;
+  width: 28px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 1.1rem;
+  line-height: 1;
+  opacity: 0;
+  transition:
+    opacity 120ms ease,
+    color 120ms ease,
+    background 120ms ease;
+}
+
+.repo-list__item:hover .repo-list__remove,
+.repo-list__remove:focus-visible {
+  opacity: 1;
+}
+
+.repo-list__remove:hover {
+  background: #f4674f1f;
+  color: var(--level-warning);
+}
+
+/* ---------- Add repo form ---------- */
+
+.add-repo {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.add-repo__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.add-repo__input {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-sunken);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.add-repo__input::placeholder {
+  color: var(--text-faint);
+}
+
+.add-repo__input:focus-visible {
+  outline: 2px solid var(--level-info);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+
+.add-repo__submit {
+  padding: 8px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: #ffffff12;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: background 120ms ease;
+}
+
+.add-repo__submit:hover:not(:disabled) {
+  background: #ffffff1f;
+}
+
+.add-repo__submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.add-repo__error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--level-warning);
+}
+
+/* ---------- State panels ---------- */
+
+.state-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 48px 32px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+}
+
+.state-panel__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.state-panel__detail {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--text-muted);
+}
+
+.state-panel__action {
+  margin-top: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: #ffffff12;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.state-panel__action:hover {
+  background: #ffffff1f;
+}
+
+/* ---------- Forecast ---------- */
+
+.forecast {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+/*
+ * Text colour on the hero follows the condition's declared ink rather than
+ * always being white, because the pale skies (sunny, snow, fog) cannot carry
+ * white text at a readable contrast.
+ */
+.forecast[data-ink='light'] {
+  --hero-ink: #ffffff;
+  --hero-ink-muted: #ffffffc7;
+  --hero-ink-faint: #ffffff85;
+  --hero-scrim: #00000024;
+}
+
+.forecast[data-ink='dark'] {
+  --hero-ink: #101820;
+  --hero-ink-muted: #101820c9;
+  --hero-ink-faint: #10182099;
+  --hero-scrim: #ffffff1a;
+}
+
+.forecast__hero {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  /* Themed by condition, so the panel's mood tracks the forecast. */
+  background: linear-gradient(160deg, var(--sky-from), var(--sky-to));
+  color: var(--hero-ink);
+}
+
+.forecast__scene {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-sm);
+  background: var(--hero-scrim);
+}
+
+.forecast__scene-placeholder {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hero-ink-faint);
+}
+
+.forecast__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--hero-ink-muted);
+}
+
+.forecast__eyebrow-sep {
+  color: var(--hero-ink-faint);
+}
+
+.forecast__refreshing {
+  color: var(--hero-ink-faint);
+  font-weight: 500;
+  font-style: italic;
+}
+
+.forecast__headline {
+  margin: 0;
+  font-size: clamp(1.5rem, 3.2vw, 2.15rem);
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.forecast__condition {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin: 10px 0 0;
+}
+
+.forecast__condition-label {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #10151d;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.forecast__condition-meaning {
+  font-size: 0.85rem;
+  color: var(--hero-ink-muted);
+}
+
+.forecast__summary {
+  margin: 12px 0 0;
+  max-width: 66ch;
+  font-size: 0.95rem;
+  color: var(--hero-ink);
+}
+
+.forecast__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
+/* ---------- Gauges ---------- */
+
+.gauges {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.gauge {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+}
+
+.gauge__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.gauge__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 4px 0 0;
+}
+
+.gauge__value {
+  font-size: 1.6rem;
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.gauge__meaning {
+  font-size: 0.8rem;
+  font-weight: 550;
+  color: var(--text-muted);
+}
+
+.gauge__detail {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
+/* A falling barometer is the one gauge worth colouring: it is the lead
+   indicator that trouble is building rather than already present. */
+.gauge--falling {
+  border-color: #f4674f5c;
+}
+
+.gauge--falling .gauge__value {
+  color: var(--level-warning);
+}
+
+.gauge--rising .gauge__value {
+  color: #56d364;
+}
+
+/* ---------- Advisories ---------- */
+
+.advisories__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.advisory {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+}
+
+/* Severity is carried by the badge rather than a coloured edge, so scanning the
+   list means reading the labels instead of decoding a stripe. */
+.advisory__level {
+  justify-self: start;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.advisory--info .advisory__level {
+  background: #58a6ff1f;
+  color: var(--level-info);
+}
+
+.advisory--watch .advisory__level {
+  background: #e3a0081f;
+  color: var(--level-watch);
+}
+
+.advisory--warning .advisory__level {
+  background: var(--level-warning);
+  color: #1a0f0c;
+}
+
+/* Only a warning earns extra weight on the card itself. */
+.advisory--warning {
+  border-color: #f4674f4d;
+}
+
+.advisory__title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.advisory__detail {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Metrics ---------- */
+
+.metrics__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1px;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--border);
+  overflow: hidden;
+}
+
+.metric {
+  padding: 12px 14px;
+  background: var(--bg-raised);
+}
+
+.metric__label {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}
+
+.metric__value {
+  margin: 2px 0 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+  .app__body {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 16px;
+  }
+
+  .repo-picker {
+    position: static;
+  }
+
+  .forecast__hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .forecast__scene {
+    max-width: 260px;
+    aspect-ratio: 16 / 9;
+  }
+}
+
+@media (max-width: 560px) {
+  .app__bar {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .advisory {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+}
+
+/* Every transition here is decorative, so drop them all when asked. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

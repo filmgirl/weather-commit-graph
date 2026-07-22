@@ -10,6 +10,12 @@ export interface ConditionMeta {
   accent: string;
   /** Sky gradient stops, light to dark. */
   sky: [string, string];
+  /**
+   * Which text colour stays legible on this sky. The pale conditions need dark
+   * text; the dark ones need light. Declared here so the sky and the text that
+   * sits on it can never drift apart.
+   */
+  ink: 'light' | 'dark';
 }
 
 export const CONDITION_META: Record<WeatherCondition, ConditionMeta> = {
@@ -19,6 +25,7 @@ export const CONDITION_META: Record<WeatherCondition, ConditionMeta> = {
     severity: 0,
     accent: '#f5b431',
     sky: ['#7ec8f5', '#2f7fc4'],
+    ink: 'dark',
   },
   'partly-cloudy': {
     label: 'Partly cloudy',
@@ -26,13 +33,15 @@ export const CONDITION_META: Record<WeatherCondition, ConditionMeta> = {
     severity: 1,
     accent: '#c9d6e4',
     sky: ['#8fb8d8', '#4a7aa5'],
+    ink: 'dark',
   },
   overcast: {
     label: 'Overcast',
     meaning: 'Velocity stalling or churn creeping up. Worth watching.',
     severity: 2,
     accent: '#94a3b4',
-    sky: ['#8f9caa', '#55636f'],
+    sky: ['#7c8896', '#454f5a'],
+    ink: 'light',
   },
   rain: {
     label: 'Rain',
@@ -40,6 +49,7 @@ export const CONDITION_META: Record<WeatherCondition, ConditionMeta> = {
     severity: 3,
     accent: '#5b9bd5',
     sky: ['#6a7f92', '#3c4a57'],
+    ink: 'light',
   },
   storm: {
     label: 'Storm',
@@ -47,20 +57,23 @@ export const CONDITION_META: Record<WeatherCondition, ConditionMeta> = {
     severity: 4,
     accent: '#a855f7',
     sky: ['#4a4560', '#221f31'],
+    ink: 'light',
   },
   fog: {
     label: 'Fog',
     meaning: 'Sparse, scattered activity. Hard to read any direction.',
     severity: 2,
     accent: '#b8bec7',
-    sky: ['#adb5bd', '#7a828b'],
+    sky: ['#c2c8cf', '#8f979f'],
+    ink: 'dark',
   },
   snow: {
     label: 'Snow',
     meaning: 'Dormant. Nothing has landed here in a long while.',
     severity: 1,
     accent: '#e2ecf5',
-    sky: ['#9fb3c4', '#6d8093'],
+    sky: ['#c8d6e3', '#8d9fb0'],
+    ink: 'dark',
   },
 };
 

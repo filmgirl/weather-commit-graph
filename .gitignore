@@ -25,3 +25,7 @@ pnpm-debug.log*
 .idea
 .DS_Store
 *.sw?
+
+# Local tooling caches
+.impeccable/
+.playwright-mcp/

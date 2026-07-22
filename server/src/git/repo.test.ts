@@ -36,6 +36,9 @@ describe('resolveRepo', () => {
 
   it('rejects a directory that is not a git repository', async () => {
     await expect(resolveRepo('/tmp')).rejects.toThrow(GitError);
+    // The message must be our own, not git's stderr forwarded to the user.
+    await expect(resolveRepo('/tmp')).rejects.toThrow(/^not a git repository: /);
+    await expect(resolveRepo('/tmp')).rejects.toMatchObject({ code: 'not_a_repo' });
   });
 
   it('rejects a path that does not exist', async () => {
