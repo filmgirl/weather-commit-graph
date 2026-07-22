@@ -2,6 +2,7 @@ import type { ForecastPayload } from '@wcg/shared';
 import { CONDITION_META } from '@wcg/shared';
 import { GaugePanel } from './GaugePanel.tsx';
 import { AdvisoryList, MetricsGrid } from './ForecastDetails.tsx';
+import { WeatherScene } from './WeatherScene.tsx';
 
 export interface ForecastViewProps {
   payload: ForecastPayload;
@@ -30,8 +31,11 @@ export function ForecastView({ payload, refreshing }: ForecastViewProps) {
     >
       <header className="forecast__hero">
         <div className="forecast__scene" aria-hidden="true">
-          {/* The animated SVG scene lands here next. */}
-          <span className="forecast__scene-placeholder">{meta.label}</span>
+          <WeatherScene
+            condition={forecast.condition}
+            intensity={forecast.intensity}
+            title={`${meta.label}: ${meta.meaning}`}
+          />
         </div>
 
         <div className="forecast__headline-block">

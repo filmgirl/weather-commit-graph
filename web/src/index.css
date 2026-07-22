@@ -417,16 +417,9 @@ code {
   display: grid;
   place-items: center;
   aspect-ratio: 4 / 3;
+  padding: 12px;
   border-radius: var(--radius-sm);
   background: var(--hero-scrim);
-}
-
-.forecast__scene-placeholder {
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--hero-ink-faint);
 }
 
 .forecast__eyebrow {
@@ -701,5 +694,242 @@ code {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+}
+
+/* ---------- Weather scenes ---------- */
+
+/*
+ * All scene motion lives here so a single reduced-motion rule can stop it. Each
+ * element's duration/delay comes from the component as an inline style, because
+ * those values are derived from the data (heavier churn = faster, denser rain).
+ */
+
+.scene {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Scenes must clip to their own box: the fog bands and drifting clouds are
+     deliberately wider than the viewBox so they can slide without gaps. */
+  overflow: hidden;
+}
+
+/* Sun */
+
+.scene__sun-disc {
+  fill: #ffd764;
+}
+
+.scene__ray {
+  stroke: #ffd764;
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+.scene__rays {
+  animation: scene-rotate 60s linear infinite;
+}
+
+.scene__sun {
+  animation: scene-pulse 6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes scene-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes scene-pulse {
+  0%,
+  100% {
+    opacity: 0.94;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Clouds */
+
+.scene__cloud > * {
+  fill: #f2f6fa;
+}
+
+.scene__cloud--dark > * {
+  fill: #b9b3cc;
+}
+
+/*
+ * Drift is applied to a child-level transform so it composes with the positioning
+ * transform on the group itself rather than fighting it.
+ */
+.scene__cloud {
+  animation: scene-drift 30s ease-in-out infinite;
+}
+
+@keyframes scene-drift {
+  0%,
+  100% {
+    translate: -7px 0;
+  }
+  50% {
+    translate: 7px 0;
+  }
+}
+
+/* Rain */
+
+.scene__drop {
+  stroke: #d8ecff;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  animation: scene-fall linear infinite;
+}
+
+.scene__rain--slant .scene__drop {
+  stroke: #cfd8ff;
+  animation-name: scene-fall-slant;
+}
+
+@keyframes scene-fall {
+  from {
+    transform: translateY(-6px);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  85% {
+    opacity: 0.9;
+  }
+  to {
+    transform: translateY(52px);
+    opacity: 0;
+  }
+}
+
+@keyframes scene-fall-slant {
+  from {
+    transform: translate(6px, -6px);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.95;
+  }
+  85% {
+    opacity: 0.95;
+  }
+  to {
+    transform: translate(-10px, 52px);
+    opacity: 0;
+  }
+}
+
+/* Lightning */
+
+.scene__bolt {
+  fill: #ffe66b;
+}
+
+/*
+ * The bolt stays faintly visible and flashes bright, rather than only existing
+ * during the flash. A storm should still read as a storm in a still frame, or
+ * for anyone who has motion disabled.
+ */
+.scene__lightning {
+  opacity: 0.32;
+  animation: scene-flash 4.5s steps(1, end) infinite;
+}
+
+@keyframes scene-flash {
+  0%,
+  100% {
+    opacity: 0.32;
+  }
+  2% {
+    opacity: 1;
+  }
+  5% {
+    opacity: 0.32;
+  }
+  8% {
+    opacity: 0.9;
+  }
+  11% {
+    opacity: 0.32;
+  }
+}
+
+/* Fog */
+
+.scene__fog-band {
+  fill: #ffffff;
+  animation: scene-fog-slide ease-in-out infinite alternate;
+}
+
+@keyframes scene-fog-slide {
+  from {
+    translate: -22px 0;
+  }
+  to {
+    translate: 22px 0;
+  }
+}
+
+/* Snow */
+
+.scene__flake {
+  fill: #ffffff;
+  animation: scene-flutter linear infinite;
+}
+
+@keyframes scene-flutter {
+  from {
+    transform: translate(0, -14px);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.95;
+  }
+  50% {
+    transform: translate(6px, 16px);
+  }
+  85% {
+    opacity: 0.9;
+  }
+  to {
+    transform: translate(-4px, 52px);
+    opacity: 0;
+  }
+}
+
+/*
+ * Reduced motion: hold every scene on a representative frame rather than hiding
+ * the artwork. Falling elements are frozen at staggered positions (--frozen-y,
+ * set per element by the component) so rain and snow still look like weather in
+ * mid-fall instead of a single row of marks.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .scene__rays,
+  .scene__sun,
+  .scene__cloud,
+  .scene__drop,
+  .scene__lightning,
+  .scene__fog-band,
+  .scene__flake {
+    animation: none !important;
+  }
+
+  .scene__lightning {
+    opacity: 1;
+  }
+
+  .scene__drop,
+  .scene__flake {
+    opacity: 0.9;
+    transform: translateY(var(--frozen-y, 0));
   }
 }

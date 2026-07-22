@@ -60,6 +60,23 @@ describe('buildForecast against the demo repos', () => {
     expect(forecast.advisories.every((advisory) => advisory.level === 'info')).toBe(true);
   });
 
+  it('publishes intensity so the UI can scale a scene without rescoring', async () => {
+    const calm = await analyzeDemo('demo-sunny');
+    const rough = await analyzeDemo('demo-stormy');
+
+    const calmForecast = buildForecast(calm, { windowDays: WINDOW_DAYS });
+    const roughForecast = buildForecast(rough, { windowDays: WINDOW_DAYS });
+
+    for (const result of [calmForecast, roughForecast]) {
+      expect(result.forecast.intensity).toBeGreaterThanOrEqual(0);
+      expect(result.forecast.intensity).toBeLessThanOrEqual(1);
+      // Must track the score it is derived from, within rounding.
+      expect(result.forecast.intensity).toBeCloseTo(result.scores.trouble, 2);
+    }
+
+    expect(roughForecast.forecast.intensity).toBeGreaterThan(calmForecast.forecast.intensity);
+  });
+
   it('explains the dormant repo instead of calling it healthy', async () => {
     const analysis = await analyzeDemo('demo-dormant');
     const { forecast } = buildForecast(analysis, { windowDays: WINDOW_DAYS });

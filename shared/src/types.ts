@@ -72,6 +72,11 @@ export interface Forecast {
   condition: WeatherCondition;
   headline: string;
   summary: string;
+  /**
+   * 0..1 blended trouble score behind the condition. Exposed so the UI can scale
+   * how busy a scene looks without reimplementing the weather model.
+   */
+  intensity: number;
   gauges: Gauges;
   advisories: Advisory[];
 }

@@ -45,6 +45,7 @@ export function buildForecast(analysis: RepoAnalysis, options: ForecastOptions):
     condition,
     headline: buildHeadline(condition),
     summary: buildSummary(analysis.metrics, condition),
+    intensity: Math.round(scores.trouble * 1000) / 1000,
     gauges: buildGauges(analysis.metrics, fixRatioTrend(analysis, windowDays, now)),
     advisories: buildAdvisories(analysis.metrics, scores, hotspots),
   };
